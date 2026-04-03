@@ -3,13 +3,18 @@ from rclpy.node import Node
 from turtlesim.msg import Pose
 from geometry_msgs.msg import Twist
 import math
+from std_msgs.msg import Bool 
  
+<<<<<<< HEAD
 # (1) Créer un nœud set_way_point.py dans turtle_regulation
+=======
+# (1) Crée un nœud set_way_point.py dans turtle_regulation
+>>>>>>> bccca61 (Regulation en distance + is_moving)
 class SetWayPoint(Node):
     def __init__(self):
         super().__init__("set_way_point")
  
-        # (2) Créer un attribut pour stocker la pose de la tortue
+        # (2) Crée un attribut pour stocker la pose de la tortue
         self.pose_tortue = None
  
         # (3) Définir un attribut waypoint avec les coordonnées (7,7)
@@ -17,7 +22,7 @@ class SetWayPoint(Node):
         self.waypoint_y = 7.0
  
         # (5) Définir la constante Kp pour la commande proportionnelle
-        self.kp = 0.5
+        self.kp = 2.0
  
         # (2) Souscrire au topic /turtle1/pose de type Pose
         self.subscription = self.create_subscription(
@@ -27,21 +32,30 @@ class SetWayPoint(Node):
             10
         )
  
-        # (5) Créer un publisher pour publier sur /turtle1/cmd_vel
+        # (5) Crée un publisher pour publier sur /turtle1/cmd_vel
         self.publisher_cmd = self.create_publisher(
             Twist,
             "/turtle1/cmd_vel",
             10
         )
  
-      # (5) Créer un timer pour exécuter la régulation régulièrement
+      # (5) Crée un timer pour exécuter la régulation régulièrement
         self.timer = self.create_timer(0.1, self.control_loop)
+
+        # Partie 2 - Q2: gain pour la vitesse linéaire
+        self.kpl = 3.0
+
+        # Partie 2 - Q3: seuil de distance pour arrêter le mouvement
+        self.distance_tolerance = 0.1
+
+        # Partie 2 - Q4: publisher booléen sur is_moving
+        self.publisher_is_moving = self.create_publisher(Bool, "/is_moving", 10)
  
          # (2) Quand on reçoit un message pose, on met à jour l’attribut pose_tortue
     def pose_callback(self, msg):
         self.pose_tortue = msg
  
-        # (4) Calculer l’angle désiré entre la tortue et le waypoint
+        # (4) Calcul de l’angle désiré entre la tortue et le waypoint
     def calcul_angle_desire(self):
         if self.pose_tortue is None:
             return None
@@ -55,21 +69,46 @@ class SetWayPoint(Node):
         theta_desired = math.atan2(yB - yA, xB - xA)
         return theta_desired
  
-        # (5) Calculer l’erreur, la commande u, puis publier cmd_vel
+        # (5) Calcul de l’erreur, la commande u, puis publier cmd_vel
     def control_loop(self):
         if self.pose_tortue is None:
             return
- 
+
+        # Partie 2 - Q1: distance entre tortue et waypoint
+        dx = self.waypoint_x - self.pose_tortue.x
+        dy = self.waypoint_y - self.pose_tortue.y
+        distance = math.sqrt(dx**2 + dy**2)
+
         theta_desired = self.calcul_angle_desire()
         theta = self.pose_tortue.theta
- 
+
         e = 2 * math.atan(math.tan((theta_desired - theta) / 2))
         u = self.kp * e
- 
+
+        # Partie 2 - Q3: si on est assez proche du waypoint, on n'envoie plus de mouvement
+        if distance < self.distance_tolerance:
+            cmd = Twist()
+            self.publisher_cmd.publish(cmd)
+
+            # Partie 2 - Q4: la tortue ne bouge plus
+            is_moving_msg = Bool()
+            is_moving_msg.data = False
+            self.publisher_is_moving.publish(is_moving_msg)
+            return
+        
+        # Partie 2 - Q4: la tortue est en mouvement
+        is_moving_msg = Bool()
+        is_moving_msg.data = True
+        self.publisher_is_moving.publish(is_moving_msg)
+
+        # Partie 2 - Q2: v = Kpl * el
+        el = distance
+        v = self.kpl * el
+
         cmd = Twist()
+        cmd.linear.x = v
         cmd.angular.z = u
         self.publisher_cmd.publish(cmd)
- 
  
 def main(args=None):
     rclpy.init(args=args)
