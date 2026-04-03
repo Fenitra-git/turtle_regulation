@@ -4,7 +4,6 @@ from turtlesim.msg import Pose
 from geometry_msgs.msg import Twist
 import math
  
- 
 # (1) Créer un nœud set_way_point.py dans turtle_regulation
 class SetWayPoint(Node):
     def __init__(self):
