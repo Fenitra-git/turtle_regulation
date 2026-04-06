@@ -8,4 +8,4 @@ Kp choisi = 5 : La tortue tourne assez vite et reste plutôt stable.
 ## Partie 2 - Tests Kpl:
 Kpl faible = 0.5 : la tortue avance lentement et met plus de temps pour atteindre le waypoint.
 Kpl fort = 4 : la tortue avance très vite et dépasse le waypoint avant de revenir.
-Kpl choisi = 2 : la tortue atteint le waypoint rapidement avec un déplacement plus régulier.
+Kpl choisi = 2 : la tortue atteint le waypoint rapidement avec un déplacement plus régulier.ltur
