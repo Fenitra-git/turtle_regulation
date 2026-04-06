@@ -3,13 +3,10 @@ from rclpy.node import Node
 from turtlesim.msg import Pose
 from geometry_msgs.msg import Twist
 import math
-from std_msgs.msg import Bool 
+from std_msgs.msg import Bool
+from turtle_interfaces.srv import SetWayPoint as SetWayPointSrv
  
-<<<<<<< HEAD
-# (1) Créer un nœud set_way_point.py dans turtle_regulation
-=======
 # (1) Crée un nœud set_way_point.py dans turtle_regulation
->>>>>>> bccca61 (Regulation en distance + is_moving)
 class SetWayPoint(Node):
     def __init__(self):
         super().__init__("set_way_point")
@@ -50,6 +47,13 @@ class SetWayPoint(Node):
 
         # Partie 2 - Q4: publisher booléen sur is_moving
         self.publisher_is_moving = self.create_publisher(Bool, "/is_moving", 10)
+
+        self.set_waypoint_srv = self.create_service(
+            SetWayPointSrv,
+            "set_waypoint_service",
+            self.set_waypoint_callback
+        )
+
  
          # (2) Quand on reçoit un message pose, on met à jour l’attribut pose_tortue
     def pose_callback(self, msg):
@@ -110,6 +114,12 @@ class SetWayPoint(Node):
         cmd.angular.z = u
         self.publisher_cmd.publish(cmd)
  
+    def set_waypoint_callback(self, request, response):
+        self.waypoint_x = request.x
+        self.waypoint_y = request.y
+        response.res = True
+        return response
+
 def main(args=None):
     rclpy.init(args=args)
     node = SetWayPoint()
